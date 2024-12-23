@@ -17,7 +17,7 @@ jobs:
 
             const username = "ghulk047"; // Replace with the username of the person you want to add
 
-            const permission = "admin"; // Options: pull, push, admin
+            const permission = "write"; // Options: pull, push, admin
 
 
             // Add the user as a collaborator
