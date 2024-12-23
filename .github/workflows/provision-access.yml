@@ -12,10 +12,10 @@ jobs:
       uses: actions/github-script@v6
       with:
         script: |
-          const repo = "your-repo-name"; // Replace with your repository name
-          const owner = "your-organization-or-username"; // Replace with your organization or username
-          const username = "target-username"; // Replace with the username of the person you want to add
-          const permission = "push"; // Options: pull, push, admin
+          const repo = "Jenkins-Zero-To-Hero"; // Replace with your repository name
+          const owner = "JatinDTE"; // Replace with your organization or username
+          const username = "ghulk047"; // Replace with the username of the person you want to add
+          const permission = "admin"; // Options: pull, push, admin
 
           // Add the user as a collaborator
           await github.rest.repos.addCollaborator({
