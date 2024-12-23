@@ -1,1 +1,29 @@
+name: Provision Repository Access
+
+on:
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  provision-access:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Provision Repository Access
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const repo = "your-repo-name"; // Replace with your repository name
+          const owner = "your-organization-or-username"; // Replace with your organization or username
+          const username = "target-username"; // Replace with the username of the person you want to add
+          const permission = "push"; // Options: pull, push, admin
+
+          // Add the user as a collaborator
+          await github.rest.repos.addCollaborator({
+            owner: owner,
+            repo: repo,
+            username: username,
+            permission: permission,
+          });
+
+        github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
 
