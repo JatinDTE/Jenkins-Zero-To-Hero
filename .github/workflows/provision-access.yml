@@ -1,29 +1,32 @@
+---
 name: Provision Repository Access
-
 on:
-  workflow_dispatch: # Allows manual trigger
-
+  workflow_dispatch: null
 jobs:
   provision-access:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Provision Repository Access
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const repo = "Jenkins-Zero-To-Hero"; // Replace with your repository name
-          const owner = "JatinDTE"; // Replace with your organization or username
-          const username = "ghulk047"; // Replace with the username of the person you want to add
-          const permission = "admin"; // Options: pull, push, admin
+      - name: Provision Repository Access
+        uses: actions/github-script@v6
+        with:
+          script: >
+            const repo = "Jenkins-Zero-To-Hero"; // Replace with your repository
+            name
 
-          // Add the user as a collaborator
-          await github.rest.repos.addCollaborator({
-            owner: owner,
-            repo: repo,
-            username: username,
-            permission: permission,
-          });
+            const owner = "JatinDTE"; // Replace with your organization or username
 
-        github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+            const username = "ghulk047"; // Replace with the username of the person you want to add
+
+            const permission = "admin"; // Options: pull, push, admin
+
+
+            // Add the user as a collaborator
+
+            await github.rest.repos.addCollaborator({
+              owner: owner,
+              repo: repo,
+              username: username,
+              permission: permission,
+            });
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
 
