@@ -1,0 +1,45 @@
+---
+name: Add Users to Teams
+on:
+  workflow_dispatch: null
+jobs:
+  add-users-to-teams:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add Users to Teams
+        uses: actions/github-script@v6
+        with:
+          script: >
+            // Organization name
+
+            const org = "your-organization-name"; // Replace with your organization name
+
+
+            // Define the teams and users to add
+
+            const teams = [
+              {
+                team_slug: "team-slug-1", // Replace with the team's slug (not display name)
+                users: ["user1", "user2"] // List of GitHub usernames to add
+              }
+            ];
+
+
+            // Loop through each team and add users
+
+            for (const team of teams) {
+              for (const username of team.users) {
+                try {
+                  await github.rest.teams.addOrUpdateMembershipForUserInOrg({
+                    org: org,
+                    team_slug: team.team_slug,
+                    username: username,
+                    role: "member" // Options: member or maintainer
+                  });
+                  console.log(`Successfully added ${username} to team ${team.team_slug}.`);
+                } catch (error) {
+                  console.error(`Failed to add ${username} to team ${team.team_slug}: ${error.message}`);
+                }
+              }
+            }
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
