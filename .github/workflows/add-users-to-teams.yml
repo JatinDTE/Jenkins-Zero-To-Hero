@@ -20,7 +20,7 @@ jobs:
             const teams = [
               {
                 team_slug: "team-slug-1", // Replace with the team's slug (not display name)
-                users: ["user1", "user2"] // List of GitHub usernames to add
+                users: ["ghulk047"] // List of GitHub usernames to add
               }
             ];
 
