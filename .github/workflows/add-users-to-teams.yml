@@ -12,7 +12,7 @@ jobs:
           script: >
             // Organization name
 
-            const org = "your-organization-name"; // Replace with your organization name
+            const org = "JatinDTE"; // Replace with your organization name
 
 
             // Define the teams and users to add
