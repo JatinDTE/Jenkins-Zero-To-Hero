@@ -1,0 +1,42 @@
+---
+name: Add User to Multiple Repositories
+on:
+  workflow_dispatch: null
+jobs:
+  add-user-to-repos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add User to Multiple Repositories
+        uses: actions/github-script@v6
+        with:
+          script: >
+            const owner = "JatinDTE"; // Replace with your
+            GitHub org or username
+
+            const username = "ghulk047"; // Replace with the GitHub username of the user to be added
+
+
+            // List of repositories and access levels
+
+            const repositories = [
+              { repo: "Jenkins-Zero-To-Heron", permission: "admin" },
+              { repo: "argocd-operator", permission: "write" }
+            ];
+
+
+            // Loop through each repository and add the user as a collaborator
+
+            for (const repoInfo of repositories) {
+              try {
+                await github.rest.repos.addCollaborator({
+                  owner: owner,
+                  repo: repoInfo.repo,
+                  username: username,
+                  permission: repoInfo.permission,
+                });
+                console.log(`Successfully added ${username} to ${repoInfo.repo} with ${repoInfo.permission} access.`);
+              } catch (error) {
+                console.error(`Failed to add ${username} to ${repoInfo.repo}: ${error.message}`);
+              }
+            }
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
