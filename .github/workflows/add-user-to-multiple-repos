@@ -10,8 +10,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: >
-            const owner = "JatinDTE"; // Replace with your
-            GitHub org or username
+            const owner = "JatinDTE"; // Replace with your GitHub org or username
 
             const username = "ghulk047"; // Replace with the GitHub username of the user to be added
 
@@ -19,7 +18,7 @@ jobs:
             // List of repositories and access levels
 
             const repositories = [
-              { repo: "Jenkins-Zero-To-Heron", permission: "admin" },
+              { repo: "Jenkins-Zero-To-Hero", permission: "admin" },
               { repo: "argocd-operator", permission: "write" }
             ];
 
