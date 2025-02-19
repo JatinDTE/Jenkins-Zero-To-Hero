@@ -18,8 +18,8 @@ jobs:
             // List of repositories and access levels
 
             const repositories = [
-              { repo: "Jenkins-Zero-To-Hero", permission: "admin" },
-              { repo: "argocd-operator", permission: "write" }
+              { repo: "Jenkins-Zero-To-Hero", permission: "read" },
+              { repo: "argocd-operator", permission: "read" }
             ];
 
 
