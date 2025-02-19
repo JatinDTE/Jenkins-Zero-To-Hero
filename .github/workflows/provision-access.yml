@@ -21,7 +21,7 @@ jobs:
 
             const users = [
               { username: "ghulk047", permission: "write" },
-              { username: "ghulk123", permission: "admin" }
+              { username: "ghulk123", permission: "write" }
             ];
 
 
