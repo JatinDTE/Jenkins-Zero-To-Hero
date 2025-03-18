@@ -17,3 +17,7 @@ New Access:
 Jenkins-Zero-To-Hero:admin
 ---
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+
