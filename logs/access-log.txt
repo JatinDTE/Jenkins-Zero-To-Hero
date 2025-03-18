@@ -1,1 +1,19 @@
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+User: ghulk047
+Old Access:
+Jenkins-Zero-To-Hero:write
+argocd-operator:read
+New Access:
+Jenkins-Zero-To-Hero:admin
+argocd-operator:admin
+---
+User: ghulk123
+Old Access:
+Jenkins-Zero-To-Hero:write
+New Access:
+Jenkins-Zero-To-Hero:admin
+---
+
