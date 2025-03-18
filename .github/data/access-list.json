@@ -1,1 +1,18 @@
+{
+  "users": [
+    {
+      "username": "ghulk047",
+      "repositories": [
+        { "repo": "Jenkins-Zero-To-Hero", "permission": "admin" },
+        { "repo": "argocd-operator", "permission": "triage" }
+      ]
+    },
+    {
+      "username": "ghulk123",
+      "repositories": [
+        { "repo": "Jenkins-Zero-To-Hero", "permission": "write" }
+      ]
+    }
+  ]
+}
 
