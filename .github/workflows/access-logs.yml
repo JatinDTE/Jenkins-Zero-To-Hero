@@ -1,0 +1,83 @@
+name: Add Users & Track Changes
+
+on:
+  push:
+    paths:
+      - ".github/data/access-list.json" # Runs only when the JSON file is updated
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  track-changes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # Fetch the previous commit to compare changes
+
+      - name: Get Previous JSON Version
+        id: previous-json
+        run: |
+          git show HEAD~1:.github/data/access-list.json > old_access_list.json || echo '{}' > old_access_list.json
+
+      - name: Read Users from Current JSON
+        id: read-json
+        run: echo "USERS_JSON=$(cat .github/data/access-list.json | jq -c)" >> $GITHUB_ENV
+
+      - name: Track Changes in Access List
+        id: track-changes
+        run: |
+          NEW_USERS=""
+          CHANGED_ACCESS=""
+
+          # Compare old and new JSON
+          for user in $(jq -r '.users[].username' .github/data/access-list.json); do
+            OLD_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' old_access_list.json)
+            NEW_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' .github/data/access-list.json)
+
+            if [[ -z "$OLD_ACCESS" ]]; then
+              NEW_USERS+="$user\n"
+            elif [[ "$OLD_ACCESS" != "$NEW_ACCESS" ]]; then
+              CHANGED_ACCESS+="User: $user\nOld Access:\n$OLD_ACCESS\nNew Access:\n$NEW_ACCESS\n---\n"
+            fi
+          done
+
+          echo -e "🔹 **New Users Added:**\n$NEW_USERS" >> logs/access-log.txt
+          echo -e "🔹 **Changed Access Levels:**\n$CHANGED_ACCESS" >> logs/access-log.txt
+
+          echo "New Users: $NEW_USERS"
+          echo "Changed Access: $CHANGED_ACCESS"
+
+      - name: Commit Log Changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add logs/access-log.txt
+          git commit -m "🔹 Updated access logs"
+          git push
+        continue-on-error: true
+
+      - name: Add Users to Repositories
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = "JatinDTE";
+            const users = JSON.parse(process.env.USERS_JSON).users;
+
+            for (const user of users) {
+              for (const repoInfo of user.repositories) {
+                try {
+                  await github.rest.repos.addCollaborator({
+                    owner: owner,
+                    repo: repoInfo.repo,
+                    username: user.username,
+                    permission: repoInfo.permission,
+                  });
+                  console.log(`✅ Added ${user.username} to ${repoInfo.repo} with ${repoInfo.permission} access.`);
+                } catch (error) {
+                  console.error(`❌ Failed to add ${user.username} to ${repoInfo.repo}: ${error.message}`);
+                }
+              }
+            }
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
