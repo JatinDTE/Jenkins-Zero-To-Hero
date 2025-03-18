@@ -3,14 +3,14 @@
     {
       "username": "ghulk047",
       "repositories": [
-        { "repo": "Jenkins-Zero-To-Hero", "permission": "read" },
-        { "repo": "argocd-operator", "permission": "read" }
+        { "repo": "Jenkins-Zero-To-Hero", "permission": "triage" },
+        { "repo": "argocd-operator", "permission": "triage" }
       ]
     },
     {
       "username": "ghulk123",
       "repositories": [
-        { "repo": "Jenkins-Zero-To-Hero", "permission": "read" }
+        { "repo": "Jenkins-Zero-To-Hero", "permission": "triage" }
       ]
     }
   ]
