@@ -1,0 +1,39 @@
+---
+name: Add Users to Repositories from JSON
+on:
+  workflow_dispatch: null
+jobs:
+  add-users:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Read Users from JSON
+        id: read-json
+        run: echo "USERS_JSON=$(cat .github/data/access-list.json | jq -c)" >>
+          $GITHUB_ENV
+      - name: Add Users to Repositories
+        uses: actions/github-script@v6
+        with:
+          script: >
+            const owner = "JatinDTE"; // Replace with your GitHub org or username
+
+            const users = JSON.parse(process.env.USERS_JSON).users;
+
+
+            for (const user of users) {
+              for (const repoInfo of user.repositories) {
+                try {
+                  await github.rest.repos.addCollaborator({
+                    owner: owner,
+                    repo: repoInfo.repo,
+                    username: user.username,
+                    permission: repoInfo.permission,
+                  });
+                  console.log(`✅ Added ${user.username} to ${repoInfo.repo} with ${repoInfo.permission} access.`);
+                } catch (error) {
+                  console.error(`❌ Failed to add ${user.username} to ${repoInfo.repo}: ${error.message}`);
+                }
+              }
+            }
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
