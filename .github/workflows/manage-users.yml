@@ -1,0 +1,69 @@
+---
+name: Manage Repository Access
+on:
+  workflow_dispatch: null
+jobs:
+  manage-access:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Load Previous Access List
+        id: load-previous
+        run: >
+          git show HEAD~1:access-list.json > old_access_list.json || echo '{"users":
+          []}' > old_access_list.json
+      - name: Load Current Access List
+        id: load-current
+        run: |
+          cp access-list.json new_access_list.json
+      - name: Process Access Changes
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          script: >
+            const fs = require('fs');
+
+
+            // Load JSON files
+
+            const oldAccessList = JSON.parse(fs.readFileSync('old_access_list.json', 'utf8'));
+
+            const newAccessList = JSON.parse(fs.readFileSync('new_access_list.json', 'utf8'));
+
+
+            const owner = "JatinDTE"; // Replace with your GitHub org/user
+
+
+            function getRepoAccessMap(users) {
+              const map = new Map();
+              users.forEach(user => {
+                map.set(user.username, user.repositories.map(r => r.repo));
+              });
+              return map;
+            }
+
+
+            const oldAccessMap = getRepoAccessMap(oldAccessList.users);
+
+            const newAccessMap = getRepoAccessMap(newAccessList.users);
+
+
+            for (const [username, oldRepos] of oldAccessMap.entries()) {
+              const newRepos = newAccessMap.get(username) || [];
+
+              const removedRepos = oldRepos.filter(repo => !newRepos.includes(repo));
+
+              for (const repo of removedRepos) {
+                try {
+                  await github.rest.repos.removeCollaborator({
+                    owner,
+                    repo,
+                    username
+                  });
+                  console.log(`✅ Removed ${username} from ${repo}`);
+                } catch (error) {
+                  console.error(`❌ Failed to remove ${username} from ${repo}: ${error.message}`);
+                }
+              }
+            }
