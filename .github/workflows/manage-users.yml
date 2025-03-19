@@ -1,99 +1,91 @@
 ---
-name: Manage Repository Access
+name: Add Users to Repositories from JSON
 on:
   workflow_dispatch: null
 jobs:
-  manage-access:
+  add-users:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 2
-      - name: Load Previous Access List
-        id: load-previous
-        run: >
-          if git rev-parse HEAD~1 >/dev/null 2>&1 && git show HEAD~1:access-list.json
-          >/dev/null 2>&1; then
-            git show HEAD~1:access-list.json > old_access_list.json
-            echo "✅ Loaded previous access list."
-          else
-            echo '{"users": []}' > old_access_list.json
-            echo "⚠️ No previous access list found. Assuming empty list."
-          fi
-
-          echo "Old Access List:"
-
-          cat old_access_list.json
-      - name: Load Current Access List
-        id: load-current
-        run: |
-          if [ -f access-list.json ]; then
-            cp access-list.json new_access_list.json
-          else
-            echo '{"users": []}' > new_access_list.json
-            echo "⚠️ No current access list found. Created an empty list."
-          fi
-          echo "New Access List:"
-          cat new_access_list.json
-      - name: Process Access Changes
+        uses: actions/checkout@v4
+      - name: Read Users from JSON
+        id: read-json
+        run: echo "USERS_JSON=$(cat .github/data/access-list.json | jq -c)" >>
+          $GITHUB_ENV
+      - name: Sync Users with Repositories
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           script: >
-            const fs = require('fs');
+            const owner = "JatinDTE"; // Replace with your GitHub org or username
+
+            const users = JSON.parse(process.env.USERS_JSON).users;
 
 
-            // Load JSON files
+            // Fetch existing collaborators for each repository
 
-            const oldAccessList = JSON.parse(fs.readFileSync('old_access_list.json', 'utf8'));
-
-            const newAccessList = JSON.parse(fs.readFileSync('new_access_list.json', 'utf8'));
-
-
-            const owner = "JatinDTE"; // Replace with your GitHub org/user
-
-
-            function getRepoAccessMap(users) {
-              const map = new Map();
-              users.forEach(user => {
-                map.set(user.username, user.repositories.map(r => r.repo));
+            const getCollaborators = async (repo) => {
+              return await github.rest.repos.listCollaborators({
+                owner: owner,
+                repo: repo,
               });
-              return map;
-            }
+            };
 
 
-            const oldAccessMap = getRepoAccessMap(oldAccessList.users);
+            // Add and remove users based on the JSON
 
-            const newAccessMap = getRepoAccessMap(newAccessList.users);
-
-
-            console.log("Old Access Map:", JSON.stringify([...oldAccessMap.entries()], null, 2));
-
-            console.log("New Access Map:", JSON.stringify([...newAccessMap.entries()], null, 2));
-
-
-            // Detect removed repositories for each user
-
-            for (const [username, oldRepos] of oldAccessMap.entries()) {
-              const newRepos = newAccessMap.get(username) || [];
-
-              const removedRepos = oldRepos.filter(repo => !newRepos.includes(repo));
-
-              for (const repo of removedRepos) {
+            for (const user of users) {
+              for (const repoInfo of user.repositories) {
                 try {
-                  console.log(`🚀 Removing ${username} from ${repo}...`);
-                  await github.rest.repos.removeCollaborator({
-                    owner,
-                    repo,
-                    username
-                  });
-                  console.log(`✅ Successfully removed ${username} from ${repo}`);
+                  // Get existing collaborators for the repo
+                  const collaborators = await getCollaborators(repoInfo.repo);
+
+                  // Check if user is already a collaborator and needs to be removed
+                  const existingCollaborator = collaborators.find(collab => collab.login === user.username);
+                  
+                  // If the user doesn't exist in the repository, add them
+                  if (!existingCollaborator) {
+                    await github.rest.repos.addCollaborator({
+                      owner: owner,
+                      repo: repoInfo.repo,
+                      username: user.username,
+                      permission: repoInfo.permission,
+                    });
+                    console.log(`✅ Added ${user.username} to ${repoInfo.repo} with ${repoInfo.permission} access.`);
+                  } else {
+                    // User already exists, check if permission has changed
+                    if (existingCollaborator.permission !== repoInfo.permission) {
+                      await github.rest.repos.addCollaborator({
+                        owner: owner,
+                        repo: repoInfo.repo,
+                        username: user.username,
+                        permission: repoInfo.permission,
+                      });
+                      console.log(`✅ Updated ${user.username} permission to ${repoInfo.permission} on ${repoInfo.repo}.`);
+                    }
+                  }
                 } catch (error) {
-                  console.error(`❌ Failed to remove ${username} from ${repo}: ${error.message}`);
+                  console.error(`❌ Failed to add or update ${user.username} to ${repoInfo.repo}: ${error.message}`);
+                }
+              }
+
+              // Now remove users who no longer have access to any repositories
+              for (const repoInfo of user.repositories) {
+                if (!repoInfo.permission) {
+                  try {
+                    // If the user has no permission listed, remove them from the repo
+                    await github.rest.repos.removeCollaborator({
+                      owner: owner,
+                      repo: repoInfo.repo,
+                      username: user.username,
+                    });
+                    console.log(`✅ Removed ${user.username} from ${repoInfo.repo}.`);
+                  } catch (error) {
+                    console.error(`❌ Failed to remove ${user.username} from ${repoInfo.repo}: ${error.message}`);
+                  }
                 }
               }
             }
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
 
 
 
