@@ -21,13 +21,25 @@ jobs:
             const users = JSON.parse(process.env.USERS_JSON).users;
 
 
-            // Fetch existing collaborators for each repository
+            // Fetch existing collaborators for each repository with pagination handling
 
             const getCollaborators = async (repo) => {
-              return await github.rest.repos.listCollaborators({
-                owner: owner,
-                repo: repo,
-              });
+              let collaborators = [];
+              let page = 1;
+              let response;
+              
+              do {
+                response = await github.rest.repos.listCollaborators({
+                  owner: owner,
+                  repo: repo,
+                  per_page: 100,  // Adjust the per_page value if needed
+                  page: page
+                });
+                collaborators = collaborators.concat(response.data); // Merge the paginated response
+                page++;
+              } while (response.data.length === 100); // Continue if there's more data
+              
+              return collaborators;
             };
 
 
