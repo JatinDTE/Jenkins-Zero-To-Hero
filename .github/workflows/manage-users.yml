@@ -9,13 +9,14 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 2
       - name: Load Previous Access List
         id: load-previous
         run: >
-          if git rev-parse HEAD~1 >/dev/null 2>&1 && git ls-tree -r HEAD~1
-          --name-only | grep -q 'access-list.json'; then
+          if git rev-parse HEAD~1 >/dev/null 2>&1 && git show HEAD~1:access-list.json
+          >/dev/null 2>&1; then
             git show HEAD~1:access-list.json > old_access_list.json
+            echo "✅ Loaded previous access list."
           else
             echo '{"users": []}' > old_access_list.json
             echo "⚠️ No previous access list found. Assuming empty list."
@@ -93,6 +94,8 @@ jobs:
                 }
               }
             }
+
+
 
 
 
