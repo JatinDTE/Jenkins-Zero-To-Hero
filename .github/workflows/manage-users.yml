@@ -16,7 +16,11 @@ jobs:
       - name: Load Current Access List
         id: load-current
         run: |
-          cp access-list.json new_access_list.json
+          if [ -f access-list.json ]; then
+            cp access-list.json new_access_list.json
+          else
+            echo '{"users": []}' > new_access_list.json
+          fi
       - name: Process Access Changes
         uses: actions/github-script@v6
         with:
