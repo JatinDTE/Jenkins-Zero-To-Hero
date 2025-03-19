@@ -3,7 +3,7 @@
     {
       "username": "ghulk047",
       "repositories": [
-        { "repo": "Jenkins-Zero-To-Hero", "permission": "write" }
+        { "repo": "Jenkins-Zero-To-Hero", "permission": "read" }
       ]
     },
     {
