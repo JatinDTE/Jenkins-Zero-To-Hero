@@ -12,13 +12,17 @@ jobs:
           fetch-depth: 0
       - name: Load Previous Access List
         id: load-previous
-        run: |
-          if git rev-parse HEAD~1 >/dev/null 2>&1; then
+        run: >
+          if git rev-parse HEAD~1 >/dev/null 2>&1 && git ls-tree -r HEAD~1
+          --name-only | grep -q 'access-list.json'; then
             git show HEAD~1:access-list.json > old_access_list.json
           else
             echo '{"users": []}' > old_access_list.json
+            echo "⚠️ No previous access list found. Assuming empty list."
           fi
+
           echo "Old Access List:"
+
           cat old_access_list.json
       - name: Load Current Access List
         id: load-current
@@ -27,6 +31,7 @@ jobs:
             cp access-list.json new_access_list.json
           else
             echo '{"users": []}' > new_access_list.json
+            echo "⚠️ No current access list found. Created an empty list."
           fi
           echo "New Access List:"
           cat new_access_list.json
@@ -88,5 +93,6 @@ jobs:
                 }
               }
             }
+
 
 
