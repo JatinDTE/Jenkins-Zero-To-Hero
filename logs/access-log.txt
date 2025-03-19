@@ -32,3 +32,13 @@ New Access:
 Jenkins-Zero-To-Hero:admin
 ---
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+User: ghulk047
+Old Access:
+Jenkins-Zero-To-Hero:admin
+New Access:
+Jenkins-Zero-To-Hero:write
+---
+
