@@ -53,6 +53,8 @@ jobs:
             const newAccessMap = getRepoAccessMap(newAccessList.users);
 
 
+            // Detect removed repositories for each user
+
             for (const [username, oldRepos] of oldAccessMap.entries()) {
               const newRepos = newAccessMap.get(username) || [];
 
@@ -71,3 +73,4 @@ jobs:
                 }
               }
             }
+
