@@ -9,7 +9,8 @@
     {
       "username": "ghulk123",
       "repositories": [
-        { "repo": "Jenkins-Zero-To-Hero", "permission": "admin" }
+        { "repo": "Jenkins-Zero-To-Hero", "permission": "admin" },
+        { "repo": "argocd-operator", "permission": "admin" }
       ]
     }
   ]
