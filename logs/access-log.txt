@@ -52,3 +52,14 @@ New Access:
 Jenkins-Zero-To-Hero:read
 ---
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+User: ghulk123
+Old Access:
+Jenkins-Zero-To-Hero:admin
+New Access:
+Jenkins-Zero-To-Hero:admin
+argocd-operator:admin
+---
+
