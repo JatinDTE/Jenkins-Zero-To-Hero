@@ -1,0 +1,39 @@
+---
+name: Remove User from Repository
+on:
+  workflow_dispatch: null
+jobs:
+  remove_user:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Read and parse JSON
+        id: parse_json
+        run: |
+          # Read the JSON file and extract the owner, repo, and username
+          echo "Reading remove-user.json..."
+          USER_DATA=$(cat ./remove-user.json)
+
+          OWNER=$(echo $USER_DATA | jq -r '.owner')
+          REPO_NAME=$(echo $USER_DATA | jq -r '.repo')
+          USER_TO_REMOVE=$(echo $USER_DATA | jq -r '.username')
+
+          # Save them as environment variables
+          echo "OWNER=$OWNER" >> $GITHUB_ENV
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV
+          echo "USER_TO_REMOVE=$USER_TO_REMOVE" >> $GITHUB_ENV
+      - name: Remove user from repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ACCESS_TOKEN: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+        run: >
+          echo "Removing user $USER_TO_REMOVE from repository $OWNER/$REPO_NAME"
+
+
+          # Use the GitHub API to remove the user from the repository
+
+          curl -X DELETE \
+            -H "Authorization: token $ACCESS_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ env.OWNER }}/${{ env.REPO_NAME }}/collaborators/${{ env.USER_TO_REMOVE }}"
