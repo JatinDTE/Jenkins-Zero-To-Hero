@@ -1,5 +1,12 @@
-{
+[
+  {
   "owner": "JatinDTE",
   "repo": "Jenkins-Zero-To-Hero",
   "username": "ghulk047"
-}
+  },
+  {
+    "owner": "JatinDTE",
+    "repo": "argocd-operator",
+    "username": "ghulk123"
+  }
+]
