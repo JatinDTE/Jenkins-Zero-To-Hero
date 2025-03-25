@@ -1,0 +1,50 @@
+---
+name: Remove Users from Multiple Repositories
+on:
+  workflow_dispatch: null
+jobs:
+  remove_users:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Read and parse JSON
+        id: parse_json
+        run: >
+          # Read the JSON file and loop through each item
+
+          echo "Reading remove-users.json..."
+
+          USER_DATA=$(cat ./remove-users.json)
+
+
+          # Loop through each entry in the JSON file
+
+          for row in $(echo "$USER_DATA" | jq -r '.[] | @base64'); do
+            # Decode each row and extract owner, repo, and username
+            _jq() {
+              echo ${row} | base64 --decode | jq -r ${1}
+            }
+
+            OWNER=$(_jq '.owner')
+            REPO_NAME=$(_jq '.repo')
+            USER_TO_REMOVE=$(_jq '.username')
+
+            # Log the removal action in logs/removal_logs.txt
+            echo "$(date) - Removing user $USER_TO_REMOVE from repository $OWNER/$REPO_NAME" >> logs/removal_logs.txt
+            
+            # Use the GitHub API to remove the user from the repository
+            curl -X DELETE \
+              -H "Authorization: token ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${OWNER}/${REPO_NAME}/collaborators/${USER_TO_REMOVE}"
+          done
+      - name: Commit and push removal logs (if any)
+        run: >
+          if [ -f logs/removal_logs.txt ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add logs/removal_logs.txt
+            git commit -m "Updated removal logs"
+            git push
+          fi
