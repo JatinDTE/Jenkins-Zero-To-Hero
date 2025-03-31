@@ -29,23 +29,34 @@ jobs:
         id: track-changes
         run: |
           TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+          LOG_FILE="logs/access-log.txt"
+          OLD_LOG_FILE="logs/old-access-log.txt"
+
           NEW_USERS=""
           CHANGED_ACCESS=""
+
+          # Preserve old logs if they exist
+          if [[ -f "$LOG_FILE" ]]; then
+            cp "$LOG_FILE" "$OLD_LOG_FILE"
+          else
+            touch "$OLD_LOG_FILE"
+          fi
 
           # Compare old and new JSON
           for user in $(jq -r '.users[].username' .github/data/access-list.json); do
             OLD_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' old_access_list.json)
             NEW_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' .github/data/access-list.json)
+            OLD_TIMESTAMP=$(grep -oP "(?<=${user} - Old Access Date: )\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}" "$OLD_LOG_FILE" || echo "Unknown")
 
             if [[ -z "$OLD_ACCESS" ]]; then
-              NEW_USERS+="$TIMESTAMP - $user\n"
+              NEW_USERS+="$TIMESTAMP - $user (New User)\n"
             elif [[ "$OLD_ACCESS" != "$NEW_ACCESS" ]]; then
-              CHANGED_ACCESS+="$TIMESTAMP - User: $user\nOld Access:\n$OLD_ACCESS\nNew Access:\n$NEW_ACCESS\n---\n"
+              CHANGED_ACCESS+="$TIMESTAMP - User: $user\nOld Access Date: $OLD_TIMESTAMP\nOld Access:\n$OLD_ACCESS\nNew Access Date: $TIMESTAMP\nNew Access:\n$NEW_ACCESS\n---\n"
             fi
           done
 
-          echo -e "🔹 **New Users Added:**\n$NEW_USERS" >> logs/access-log.txt
-          echo -e "🔹 **Changed Access Levels:**\n$CHANGED_ACCESS" >> logs/access-log.txt
+          echo -e "$TIMESTAMP - 🔹 **New Users Added:**\n$NEW_USERS" >> $LOG_FILE
+          echo -e "$TIMESTAMP - 🔹 **Changed Access Levels:**\n$CHANGED_ACCESS" >> $LOG_FILE
 
           echo "New Users: $NEW_USERS"
           echo "Changed Access: $CHANGED_ACCESS"
