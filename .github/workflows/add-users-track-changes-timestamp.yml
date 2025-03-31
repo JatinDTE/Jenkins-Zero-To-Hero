@@ -44,8 +44,14 @@ jobs:
             fi
           done
 
-          echo -e "🔹 **New Users Added:**\n$NEW_USERS" >> logs/access-log.txt
-          echo -e "🔹 **Changed Access Levels:**\n$CHANGED_ACCESS" >> logs/access-log.txt
+          # Append to log only if changes exist
+          if [[ -n "$NEW_USERS" ]]; then
+            echo -e "🔹 **New Users Added:**\n$NEW_USERS" >> logs/access-log.txt
+          fi
+
+          if [[ -n "$CHANGED_ACCESS" ]]; then
+            echo -e "🔹 **Changed Access Levels:**\n$CHANGED_ACCESS" >> logs/access-log.txt
+          fi
 
           echo "New Users: $NEW_USERS"
           echo "Changed Access: $CHANGED_ACCESS"
