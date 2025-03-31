@@ -72,3 +72,7 @@ Jenkins-Zero-To-Hero:read
 argocd-operator:read
 ---
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+
