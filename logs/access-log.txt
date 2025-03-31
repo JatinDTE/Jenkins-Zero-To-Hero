@@ -56,3 +56,7 @@ Jenkins-Zero-To-Hero:admin
 argocd-operator:admin
 ---
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+
