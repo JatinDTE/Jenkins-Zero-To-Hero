@@ -10,3 +10,13 @@ Jenkins-Zero-To-Hero:admin
 argocd-operator:read
 ---
 
+🔹 **Changed Access Levels:**
+2025-03-31 12:05:37 - User: ghulk047
+Old Access:
+Jenkins-Zero-To-Hero:admin
+argocd-operator:admin
+New Access:
+Jenkins-Zero-To-Hero:read
+argocd-operator:admin
+---
+
