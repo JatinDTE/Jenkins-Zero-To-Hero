@@ -24,3 +24,23 @@ argocd-operator:triage
 
 🔹 **Changed Access Levels:**
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+2025-03-31 10:42:07 - User: ghulk047
+Old Access:
+Jenkins-Zero-To-Hero:triage
+argocd-operator:triage
+New Access:
+Jenkins-Zero-To-Hero:admin
+argocd-operator:admin
+---
+2025-03-31 10:42:07 - User: ghulk123
+Old Access:
+Jenkins-Zero-To-Hero:triage
+argocd-operator:triage
+New Access:
+Jenkins-Zero-To-Hero:admin
+argocd-operator:admin
+---
+
