@@ -60,3 +60,15 @@ argocd-operator:admin
 
 🔹 **Changed Access Levels:**
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+2025-03-31 12:50:47 - User: ghulk123
+Old Access:
+Jenkins-Zero-To-Hero:read
+argocd-operator:admin
+New Access:
+Jenkins-Zero-To-Hero:read
+argocd-operator:read
+---
+
