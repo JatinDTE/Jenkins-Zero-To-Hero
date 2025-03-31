@@ -28,7 +28,7 @@ jobs:
       - name: Track Changes in Access List
         id: track-changes
         run: |
-          TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+          TIMESTAMP=$(TZ='America/Detroit' date '+%Y-%m-%d %H:%M:%S')
           NEW_USERS=""
           CHANGED_ACCESS=""
 
