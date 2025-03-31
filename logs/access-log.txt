@@ -1,21 +1,2 @@
 
 
-
-🔹 **Changed Access Levels:**
-2025-03-31 11:44:54 - User: ghulk047
-Old Access:
-Jenkins-Zero-To-Hero:read
-argocd-operator:read
-New Access:
-Jenkins-Zero-To-Hero:admin
-argocd-operator:admin
----
-2025-03-31 11:44:54 - User: ghulk123
-Old Access:
-Jenkins-Zero-To-Hero:read
-argocd-operator:read
-New Access:
-Jenkins-Zero-To-Hero:admin
-argocd-operator:admin
----
-
