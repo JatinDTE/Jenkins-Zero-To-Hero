@@ -20,3 +20,7 @@ Jenkins-Zero-To-Hero:triage
 argocd-operator:triage
 ---
 
+🔹 **New Users Added:**
+
+🔹 **Changed Access Levels:**
+
