@@ -1,65 +1,54 @@
----
 name: Add Users & Track Changes-Timestamp
+
 on:
   push:
     paths:
-      - .github/data/access-list.json
-  workflow_dispatch: null
+      - ".github/data/access-list.json" # Runs only when the JSON file is updated
+  workflow_dispatch: # Allows manual trigger
+
 jobs:
   track-changes:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 2 # Fetch the previous commit to compare changes
+
       - name: Get Previous JSON Version
         id: previous-json
-        run: >
-          git show HEAD~1:.github/data/access-list.json > old_access_list.json ||
-          echo '{}' > old_access_list.json
+        run: |
+          git show HEAD~1:.github/data/access-list.json > old_access_list.json || echo '{}' > old_access_list.json
+
       - name: Read Users from Current JSON
         id: read-json
-        run: echo "USERS_JSON=$(cat .github/data/access-list.json | jq -c)" >>
-          $GITHUB_ENV
+        run: echo "USERS_JSON=$(cat .github/data/access-list.json | jq -c)" >> $GITHUB_ENV
+
       - name: Track Changes in Access List
         id: track-changes
-  run: >
-    TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+        run: |
+          TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+          NEW_USERS=""
+          CHANGED_ACCESS=""
 
-    NEW_USERS=""
+          # Compare old and new JSON
+          for user in $(jq -r '.users[].username' .github/data/access-list.json); do
+            OLD_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' old_access_list.json)
+            NEW_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' .github/data/access-list.json)
 
-    CHANGED_ACCESS=""
+            if [[ -z "$OLD_ACCESS" ]]; then
+              NEW_USERS+="$TIMESTAMP - $user\n"
+            elif [[ "$OLD_ACCESS" != "$NEW_ACCESS" ]]; then
+              CHANGED_ACCESS+="$TIMESTAMP - User: $user\nOld Access:\n$OLD_ACCESS\nNew Access:\n$NEW_ACCESS\n---\n"
+            fi
+          done
 
+          echo -e "🔹 **New Users Added:**\n$NEW_USERS" >> logs/access-log.txt
+          echo -e "🔹 **Changed Access Levels:**\n$CHANGED_ACCESS" >> logs/access-log.txt
 
-    # Compare old and new JSON
-
-    for user in $(jq -r '.users[].username' .github/data/access-list.json); do
-      OLD_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' old_access_list.json)
-      NEW_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' .github/data/access-list.json)
-
-      if [[ -z "$OLD_ACCESS" ]]; then
-        NEW_USERS+="$TIMESTAMP - $user\n"
-      elif [[ "$OLD_ACCESS" != "$NEW_ACCESS" ]]; then
-        CHANGED_ACCESS+="$TIMESTAMP - User: $user\nOld Access:\n$OLD_ACCESS\nNew Access:\n$NEW_ACCESS\n---\n"
-      fi
-    done
-
-
-    # Only write headers if there are changes
-
-    if [[ -n "$NEW_USERS" ]]; then
-      echo -e "🔹 **New Users Added:**\n$NEW_USERS" >> logs/access-log.txt
-    fi
-
-    if [[ -n "$CHANGED_ACCESS" ]]; then
-      echo -e "🔹 **Changed Access Levels:**\n$CHANGED_ACCESS" >> logs/access-log.txt
-    fi
-
-
-    echo "New Users: $NEW_USERS"
-
-    echo "Changed Access: $CHANGED_ACCESS"
+          echo "New Users: $NEW_USERS"
+          echo "Changed Access: $CHANGED_ACCESS"
 
       - name: Commit Log Changes
         run: |
