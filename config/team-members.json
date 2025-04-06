@@ -2,8 +2,8 @@
   {
     "team_slug": "storm-team",
     "users": [
-      { "username": "ghulk047", "role": "maintainer" },
-      { "username": "ghulk123", "role": "maintainer" }
+      { "username": "ghulk047", "role": "member" },
+      { "username": "ghulk123", "role": "member" }
     ]
   }
 ]
