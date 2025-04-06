@@ -1,3 +1,4 @@
 
 Tue Mar 25 07:28:08 UTC 2025 - Removing user ghulk047 from repository JatinDTE/Jenkins-Zero-To-Hero
 Tue Mar 25 07:28:09 UTC 2025 - Removing user ghulk123 from repository JatinDTE/argocd-operator
+Sun Apr  6 18:44:32 UTC 2025 - Removing user ghulk123 from repository JatinDTE/Jenkins-Zero-To-Hero
