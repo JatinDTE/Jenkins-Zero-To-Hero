@@ -1,5 +1,5 @@
 ---
-name: Add Users to Teams-JSON
+name: Add Users to Teams - Json
 on:
   workflow_dispatch: null
 jobs:
@@ -12,7 +12,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-      - name: Add users to teams from JSON and log changes
+      - name: Add users to teams and update log
         id: add-users
         uses: actions/github-script@v6
         with:
@@ -24,10 +24,10 @@ jobs:
 
             const org = "JatinDTE";
 
-            const logs = [];
-
-
             const logDir = 'logs';
+
+            const logFile = `${logDir}/team-update.txt`;
+
 
             if (!fs.existsSync(logDir)) {
               fs.mkdirSync(logDir);
@@ -36,15 +36,23 @@ jobs:
 
             const now = new Date();
 
-            const timestamp = now.toISOString().replace(/[-:]/g, '').replace(/\..+/, '');
+            const timestamp = now.toLocaleString('en-US', {
+              timeZone: 'America/Detroit',
+              hour12: false
+            });
 
-            const logFileName = `team-update-${timestamp}.log`;
 
-            const logPath = `${logDir}/${logFileName}`;
+            const logs = [];
+
+            logs.push(`\n===== Team Sync Started at ${timestamp} =====`);
 
 
             if (!fs.existsSync(path)) {
-              throw new Error(`❌ JSON file not found at: ${path}`);
+              const err = `❌ JSON file not found: ${path}`;
+              console.error(err);
+              logs.push(err);
+              fs.appendFileSync(logFile, logs.join('\n') + '\n');
+              throw new Error(err);
             }
 
 
@@ -56,7 +64,7 @@ jobs:
                 const { username, role } = user;
                 try {
                   // Check if user is already a member
-                  let existing;
+                  let existing = false;
                   try {
                     const res = await github.rest.teams.getMembershipForUserInOrg({
                       org,
@@ -65,7 +73,7 @@ jobs:
                     });
                     existing = res?.data?.state === "active";
                   } catch (err) {
-                    existing = false; // not a member
+                    existing = false;
                   }
 
                   if (existing) {
@@ -96,29 +104,25 @@ jobs:
             }
 
 
-            // Write logs to file
+            logs.push(`===== Team Sync Ended at ${timestamp} =====`);
 
-            fs.writeFileSync(logPath, logs.join('\n'));
+            fs.appendFileSync(logFile, logs.join('\n') + '\n');
 
 
-            // Write logs to GitHub summary
+            // Write summary to GitHub UI
 
             await core.summary
               .addHeading('📝 Team Membership Update Log')
               .addCodeBlock(logs.join('\n'), 'text')
               .write();
-
-            // Output log file name for next step
-
-            core.setOutput("log_file", logFileName);
-      - name: Commit and push log file
+      - name: Commit and push updated log file
         run: >
           git config user.name "github-actions[bot]"
 
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add logs/
+          git add logs/team-update.txt
 
-          git commit -m "🔐 Team update log - $(date -u +"%Y-%m-%d %H:%M:%S")"
+          git commit -m "📄 Update team membership log"
 
           git push
