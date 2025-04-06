@@ -1,5 +1,5 @@
 ---
-name: Add Users to Teams - Json
+name: Add Users to Teams - JSON
 on:
   workflow_dispatch: null
 jobs:
@@ -8,7 +8,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Set up Node.js (needed for date formatting)
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -63,27 +63,31 @@ jobs:
               for (const user of team.users) {
                 const { username, role } = user;
                 try {
-                  // Check if user is already a member
-                  let existing = false;
+                  let alreadyCorrectRole = false;
+
                   try {
                     const res = await github.rest.teams.getMembershipForUserInOrg({
                       org,
                       team_slug: team.team_slug,
                       username
                     });
-                    existing = res?.data?.state === "active";
+
+                    const currentRole = res?.data?.role;
+                    const state = res?.data?.state;
+                    alreadyCorrectRole = state === "active" && currentRole === role;
                   } catch (err) {
-                    existing = false;
+                    // User is not a member, so will be added
+                    alreadyCorrectRole = false;
                   }
 
-                  if (existing) {
-                    const msg = `🔁 ${username} is already a member of ${team.team_slug}, skipping.`;
+                  if (alreadyCorrectRole) {
+                    const msg = `🔁 ${username} is already a ${role} in ${team.team_slug}, skipping.`;
                     console.log(msg);
                     logs.push(msg);
                     continue;
                   }
 
-                  // Add user to team
+                  // Add or update membership
                   await github.rest.teams.addOrUpdateMembershipForUserInOrg({
                     org,
                     team_slug: team.team_slug,
@@ -91,12 +95,12 @@ jobs:
                     role
                   });
 
-                  const msg = `✅ Added ${username} to ${team.team_slug} as ${role}.`;
+                  const msg = `✅ Added or updated ${username} in ${team.team_slug} as ${role}.`;
                   console.log(msg);
                   logs.push(msg);
 
                 } catch (error) {
-                  const msg = `❌ Failed to add ${username} to ${team.team_slug}: ${error.message}`;
+                  const msg = `❌ Failed to add/update ${username} in ${team.team_slug}: ${error.message}`;
                   console.error(msg);
                   logs.push(msg);
                 }
@@ -108,8 +112,6 @@ jobs:
 
             fs.appendFileSync(logFile, logs.join('\n') + '\n');
 
-
-            // Write summary to GitHub UI
 
             await core.summary
               .addHeading('📝 Team Membership Update Log')
