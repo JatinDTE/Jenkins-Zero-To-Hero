@@ -1,5 +1,5 @@
 ---
-name: Add Users to Teams
+name: Add Users to Teams-JSON
 on:
   workflow_dispatch: null
 jobs:
