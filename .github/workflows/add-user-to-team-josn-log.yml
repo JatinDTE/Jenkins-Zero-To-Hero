@@ -1,0 +1,124 @@
+---
+name: Add Users to Teams
+on:
+  workflow_dispatch: null
+jobs:
+  add-users-to-teams:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js (needed for date formatting)
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Add users to teams from JSON and log changes
+        id: add-users
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          script: >
+            const fs = require('fs');
+
+            const path = 'config/team-members.json';
+
+            const org = "JatinDTE";
+
+            const logs = [];
+
+
+            const logDir = 'logs';
+
+            if (!fs.existsSync(logDir)) {
+              fs.mkdirSync(logDir);
+            }
+
+
+            const now = new Date();
+
+            const timestamp = now.toISOString().replace(/[-:]/g, '').replace(/\..+/, '');
+
+            const logFileName = `team-update-${timestamp}.log`;
+
+            const logPath = `${logDir}/${logFileName}`;
+
+
+            if (!fs.existsSync(path)) {
+              throw new Error(`❌ JSON file not found at: ${path}`);
+            }
+
+
+            const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+
+            for (const team of data) {
+              for (const user of team.users) {
+                const { username, role } = user;
+                try {
+                  // Check if user is already a member
+                  let existing;
+                  try {
+                    const res = await github.rest.teams.getMembershipForUserInOrg({
+                      org,
+                      team_slug: team.team_slug,
+                      username
+                    });
+                    existing = res?.data?.state === "active";
+                  } catch (err) {
+                    existing = false; // not a member
+                  }
+
+                  if (existing) {
+                    const msg = `🔁 ${username} is already a member of ${team.team_slug}, skipping.`;
+                    console.log(msg);
+                    logs.push(msg);
+                    continue;
+                  }
+
+                  // Add user to team
+                  await github.rest.teams.addOrUpdateMembershipForUserInOrg({
+                    org,
+                    team_slug: team.team_slug,
+                    username,
+                    role
+                  });
+
+                  const msg = `✅ Added ${username} to ${team.team_slug} as ${role}.`;
+                  console.log(msg);
+                  logs.push(msg);
+
+                } catch (error) {
+                  const msg = `❌ Failed to add ${username} to ${team.team_slug}: ${error.message}`;
+                  console.error(msg);
+                  logs.push(msg);
+                }
+              }
+            }
+
+
+            // Write logs to file
+
+            fs.writeFileSync(logPath, logs.join('\n'));
+
+
+            // Write logs to GitHub summary
+
+            await core.summary
+              .addHeading('📝 Team Membership Update Log')
+              .addCodeBlock(logs.join('\n'), 'text')
+              .write();
+
+            // Output log file name for next step
+
+            core.setOutput("log_file", logFileName);
+      - name: Commit and push log file
+        run: >
+          git config user.name "github-actions[bot]"
+
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add logs/
+
+          git commit -m "🔐 Team update log - $(date -u +"%Y-%m-%d %H:%M:%S")"
+
+          git push
