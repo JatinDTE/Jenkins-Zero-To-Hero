@@ -132,3 +132,6 @@ Jenkins-Zero-To-Hero:maintain
 argocd-operator:maintain
 ---
 
+🔹 **Changed Access:**
+2025-04-14 07:38:04 - Changed Jenkins-Zero-To-Hero|ghulk123 from maintain to admin
+
