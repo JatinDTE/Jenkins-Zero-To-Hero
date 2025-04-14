@@ -138,3 +138,7 @@ argocd-operator:maintain
 🔹 **Removed Users:**
 2025-04-14 07:41:53 - Removed Jenkins-Zero-To-Hero|ghulk123 (had admin)
 
+🔹 **Removed Users:**
+2025-04-14 07:49:37 - Removed Jenkins-Zero-To-Hero|ghulk047 (had maintain)
+2025-04-14 07:49:37 - Removed argocd-operator|ghulk047 (had maintain)
+
