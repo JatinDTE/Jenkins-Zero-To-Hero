@@ -1,64 +1,125 @@
-name: Add Users & Track Changes-Timestamp
-
+---
+name: Sync Repo Access and Track Changes
 on:
   push:
     paths:
-      - ".github/data/access-list.json" # Runs only when the JSON file is updated
-  workflow_dispatch: # Allows manual trigger
-
+      - .github/data/access-list.json
+  workflow_dispatch: null
 jobs:
-  track-changes:
+  sync-access:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2 # Fetch the previous commit to compare changes
-
+          fetch-depth: 2
       - name: Get Previous JSON Version
-        id: previous-json
-        run: |
-          git show HEAD~1:.github/data/access-list.json > old_access_list.json || echo '{}' > old_access_list.json
-
-      - name: Read Users from Current JSON
-        id: read-json
-        run: echo "USERS_JSON=$(cat .github/data/access-list.json | jq -c)" >> $GITHUB_ENV
-
-      - name: Track Changes in Access List
-        id: track-changes
-        run: |
+        run: >
+          git show HEAD~1:.github/data/access-list.json > old_access_list.json ||
+          echo '{"users":[]}' > old_access_list.json
+      - name: Read Current Users JSON
+        run: echo "USERS_JSON=$(cat .github/data/access-list.json | jq -c)" >>
+          $GITHUB_ENV
+      - name: Compare and Track Changes
+        id: track
+        run: >
           TIMESTAMP=$(TZ='America/Detroit' date '+%Y-%m-%d %H:%M:%S')
+
           NEW_USERS=""
+
           CHANGED_ACCESS=""
 
-          # Compare old and new JSON
-          for user in $(jq -r '.users[].username' .github/data/access-list.json); do
-            OLD_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' old_access_list.json)
-            NEW_ACCESS=$(jq -r --arg user "$user" '.users[] | select(.username == $user) | .repositories[] | "\(.repo):\(.permission)"' .github/data/access-list.json)
+          REMOVED_USERS=""
 
-            if [[ -z "$OLD_ACCESS" ]]; then
-              NEW_USERS+="$TIMESTAMP - $user\n"
-            elif [[ "$OLD_ACCESS" != "$NEW_ACCESS" ]]; then
-              CHANGED_ACCESS+="$TIMESTAMP - User: $user\nOld Access:\n$OLD_ACCESS\nNew Access:\n$NEW_ACCESS\n---\n"
+
+          # Extract repos and usernames from both files
+
+          touch logs/access-log.txt
+
+
+          jq -c '.users[]' .github/data/access-list.json > new_users.jsonl
+
+          jq -c '.users[]' old_access_list.json > old_users.jsonl
+
+
+          # Build current state mapping
+
+          declare -A new_access
+
+          while read -r user; do
+            username=$(echo $user | jq -r '.username')
+            for row in $(echo "$user" | jq -c '.repositories[]'); do
+              repo=$(echo $row | jq -r '.repo')
+              perm=$(echo $row | jq -r '.permission')
+              new_access["$repo|$username"]=$perm
+            done
+          done < new_users.jsonl
+
+
+          declare -A old_access
+
+          while read -r user; do
+            username=$(echo $user | jq -r '.username')
+            for row in $(echo "$user" | jq -c '.repositories[]'); do
+              repo=$(echo $row | jq -r '.repo')
+              perm=$(echo $row | jq -r '.permission')
+              old_access["$repo|$username"]=$perm
+            done
+          done < old_users.jsonl
+
+
+          # Detect new users or changed roles
+
+          for key in "${!new_access[@]}"; do
+            if [[ -z "${old_access[$key]}" ]]; then
+              NEW_USERS+="$TIMESTAMP - Added $key with ${new_access[$key]}\n"
+            elif [[ "${old_access[$key]}" != "${new_access[$key]}" ]]; then
+              CHANGED_ACCESS+="$TIMESTAMP - Changed $key from ${old_access[$key]} to ${new_access[$key]}\n"
             fi
           done
 
-          if [[ -n "$NEW_USERS" ]]; then
-            echo -e "🔹 **New Users Added:**\n$NEW_USERS" >> logs/access-log.txt
-          fi
-          if [[ -n "$CHANGED_ACCESS" ]]; then
-            echo -e "🔹 **Changed Access Levels:**\n$CHANGED_ACCESS" >> logs/access-log.txt
-          fi
 
-          echo "New Users: $NEW_USERS"
-          echo "Changed Access: $CHANGED_ACCESS"
+          # Detect removed users
 
-      - name: Commit Log Changes
+          for key in "${!old_access[@]}"; do
+            if [[ -z "${new_access[$key]}" ]]; then
+              REMOVED_USERS+="$TIMESTAMP - Removed $key (had ${old_access[$key]})\n"
+            fi
+          done
+
+
+          # Log to file
+
+          {
+            [[ -n "$NEW_USERS" ]] && echo -e "🔹 **New Users:**\n$NEW_USERS"
+            [[ -n "$CHANGED_ACCESS" ]] && echo -e "🔹 **Changed Access:**\n$CHANGED_ACCESS"
+            [[ -n "$REMOVED_USERS" ]] && echo -e "🔹 **Removed Users:**\n$REMOVED_USERS"
+          } >> logs/access-log.txt
+
+
+          echo "NEW_USERS<<EOF" >> $GITHUB_ENV
+
+          echo "$NEW_USERS" >> $GITHUB_ENV
+
+          echo "EOF" >> $GITHUB_ENV
+
+
+          echo "CHANGED_ACCESS<<EOF" >> $GITHUB_ENV
+
+          echo "$CHANGED_ACCESS" >> $GITHUB_ENV
+
+          echo "EOF" >> $GITHUB_ENV
+
+
+          echo "REMOVED_USERS<<EOF" >> $GITHUB_ENV
+
+          echo "$REMOVED_USERS" >> $GITHUB_ENV
+
+          echo "EOF" >> $GITHUB_ENV
+      - name: Commit Log if Changed
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
           if [[ -n $(git status --porcelain logs/access-log.txt) ]]; then
             git add logs/access-log.txt
             git commit -m "🔹 Updated access logs"
@@ -66,14 +127,15 @@ jobs:
           else
             echo "No changes to commit."
           fi
-        continue-on-error: true
-
-      - name: Add Users to Repositories
+      - name: Apply Access (Add or Update)
         uses: actions/github-script@v6
         with:
-          script: |
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          script: >
             const owner = "JatinDTE";
+
             const users = JSON.parse(process.env.USERS_JSON).users;
+
 
             for (const user of users) {
               for (const repoInfo of user.repositories) {
@@ -84,10 +146,56 @@ jobs:
                     username: user.username,
                     permission: repoInfo.permission,
                   });
-                  console.log(`✅ Added ${user.username} to ${repoInfo.repo} with ${repoInfo.permission} access.`);
+                  console.log(`✅ ${user.username} added to ${repoInfo.repo} as ${repoInfo.permission}`);
                 } catch (error) {
                   console.error(`❌ Failed to add ${user.username} to ${repoInfo.repo}: ${error.message}`);
                 }
               }
             }
+      - name: Remove Users No Longer Listed
+        uses: actions/github-script@v6
+        with:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          script: >
+            const fs = require("fs");
+
+            const oldData = JSON.parse(fs.readFileSync("old_access_list.json", "utf8"));
+
+            const newData = JSON.parse(fs.readFileSync(".github/data/access-list.json", "utf8"));
+
+
+            const org = "JatinDTE";
+
+
+            const buildMap = (data) => {
+              const map = new Map();
+              for (const user of data.users) {
+                for (const repo of user.repositories) {
+                  const key = `${repo.repo}|${user.username}`;
+                  map.set(key, repo.permission);
+                }
+              }
+              return map;
+            };
+
+
+            const oldMap = buildMap(oldData);
+
+            const newMap = buildMap(newData);
+
+
+            for (const [key, oldPerm] of oldMap.entries()) {
+              if (!newMap.has(key)) {
+                const [repo, username] = key.split("|");
+                try {
+                  await github.rest.repos.removeCollaborator({
+                    owner: org,
+                    repo: repo,
+                    username: username,
+                  });
+                  console.log(`🚫 Removed ${username} from ${repo}`);
+                } catch (err) {
+                  console.error(`❌ Failed to remove ${username} from ${repo}: ${err.message}`);
+                }
+              }
+            }
