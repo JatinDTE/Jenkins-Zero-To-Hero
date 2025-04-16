@@ -142,3 +142,10 @@ argocd-operator:maintain
 2025-04-14 07:49:37 - Removed Jenkins-Zero-To-Hero|ghulk047 (had maintain)
 2025-04-14 07:49:37 - Removed argocd-operator|ghulk047 (had maintain)
 
+🔹 **New Users:**
+2025-04-16 10:01:55 - Added Jenkins-Zero-To-Hero|ghulk047 with maintain
+2025-04-16 10:01:55 - Added Jenkins-Zero-To-Hero|ghulk123 with maintain
+
+🔹 **Changed Access:**
+2025-04-16 10:01:55 - Changed argocd-operator|ghulk123 from maintain to admin
+
