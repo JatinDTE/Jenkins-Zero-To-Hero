@@ -1,0 +1,158 @@
+---
+name: Sync Team Members from JSON
+on:
+  push:
+    paths:
+      - config/team-members.json
+  workflow_dispatch: null
+jobs:
+  sync-team-members:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - name: Sync team members (add, update, remove)
+        id: sync-teams
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          script: >
+            const fs = require('fs');
+
+
+            const path = 'config/team-members.json';
+
+            const org = "JatinDTE";
+
+            const logDir = 'logs';
+
+            const logFile = `${logDir}/team-update.txt`;
+
+
+            if (!fs.existsSync(logDir)) {
+              fs.mkdirSync(logDir);
+            }
+
+
+            const now = new Date();
+
+            const timestamp = now.toLocaleString('en-US', {
+              timeZone: 'America/Detroit',
+              hour12: false
+            });
+
+
+            const logs = [];
+
+            logs.push(`\n===== Team Sync Started at ${timestamp} =====`);
+
+
+            if (!fs.existsSync(path)) {
+              const err = `❌ JSON file not found: ${path}`;
+              console.error(err);
+              logs.push(err);
+              fs.appendFileSync(logFile, logs.join('\n') + '\n');
+              throw new Error(err);
+            }
+
+
+            const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+
+            for (const team of data) {
+              const teamSlug = team.team_slug;
+              const desiredUsers = team.users;
+              const desiredUsernames = desiredUsers.map(u => u.username);
+
+              // Get current members of the team
+              const currentMembers = await github.paginate(
+                github.rest.teams.listMembersInOrg,
+                { org, team_slug: teamSlug }
+              );
+
+              const currentUsernames = currentMembers.map(member => member.login);
+
+              // Add or update users
+              for (const user of desiredUsers) {
+                const { username, role } = user;
+                try {
+                  const res = await github.rest.teams.getMembershipForUserInOrg({
+                    org,
+                    team_slug: teamSlug,
+                    username
+                  }).catch(() => null);
+
+                  const currentRole = res?.data?.role;
+                  const state = res?.data?.state;
+
+                  if (state === "active" && currentRole === role) {
+                    const msg = `🔁 ${username} is already a ${role} in ${teamSlug}, skipping.`;
+                    console.log(msg);
+                    logs.push(msg);
+                    continue;
+                  }
+
+                  await github.rest.teams.addOrUpdateMembershipForUserInOrg({
+                    org,
+                    team_slug: teamSlug,
+                    username,
+                    role
+                  });
+
+                  const msg = `✅ Added/Updated ${username} in ${teamSlug} as ${role}.`;
+                  console.log(msg);
+                  logs.push(msg);
+                } catch (error) {
+                  const msg = `❌ Failed to add/update ${username} in ${teamSlug}: ${error.message}`;
+                  console.error(msg);
+                  logs.push(msg);
+                }
+              }
+
+              // Remove users not in the JSON
+              for (const currentUser of currentUsernames) {
+                if (!desiredUsernames.includes(currentUser)) {
+                  try {
+                    await github.rest.teams.removeMembershipForUserInOrg({
+                      org,
+                      team_slug: teamSlug,
+                      username: currentUser
+                    });
+                    const msg = `➖ Removed ${currentUser} from ${teamSlug} (not listed in JSON).`;
+                    console.log(msg);
+                    logs.push(msg);
+                  } catch (error) {
+                    const msg = `❌ Failed to remove ${currentUser} from ${teamSlug}: ${error.message}`;
+                    console.error(msg);
+                    logs.push(msg);
+                  }
+                }
+              }
+            }
+
+
+            logs.push(`===== Team Sync Ended at ${timestamp} =====`);
+
+            fs.appendFileSync(logFile, logs.join('\n') + '\n');
+
+
+            await core.summary
+              .addHeading('📝 Team Membership Update Log')
+              .addCodeBlock(logs.join('\n'), 'text')
+              .write();
+      - name: Commit and push updated log file
+        run: >
+          git config user.name "github-actions[bot]"
+
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add logs/team-update.txt
+
+          git commit -m "📄 Update team membership log"
+
+          git push
+        continue-on-error: true
