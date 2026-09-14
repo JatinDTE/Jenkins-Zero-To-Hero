@@ -156,3 +156,6 @@ argocd-operator:maintain
 🔹 **New Users:**
 2026-09-14 12:50:57 - Added old-argo-dataflow|ghulk123 with read
 
+🔹 **Changed Access:**
+2026-09-14 12:56:27 - Changed old-argo-dataflow|ghulk123 from read to write
+
