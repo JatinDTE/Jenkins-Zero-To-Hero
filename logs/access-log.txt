@@ -153,3 +153,6 @@ argocd-operator:maintain
 2025-04-16 10:15:48 - Removed argocd-operator|ghulk123 (had admin)
 2025-04-16 10:15:48 - Removed Jenkins-Zero-To-Hero|ghulk047 (had maintain)
 
+🔹 **New Users:**
+2026-09-14 12:50:57 - Added old-argo-dataflow|ghulk123 with read
+
