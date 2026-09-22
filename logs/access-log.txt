@@ -165,3 +165,6 @@ argocd-operator:maintain
 🔹 **Removed Users:**
 2026-09-14 13:15:58 - Removed old-argo-dataflow|ghulk123 (had maintain)
 
+🔹 **New Users:**
+2026-09-22 03:24:51 - Added argocd-operator|ghulk123 with admin
+
