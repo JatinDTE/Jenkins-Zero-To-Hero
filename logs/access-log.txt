@@ -168,3 +168,6 @@ argocd-operator:maintain
 🔹 **New Users:**
 2026-09-22 03:24:51 - Added argocd-operator|ghulk123 with admin
 
+🔹 **Changed Access:**
+2026-09-30 06:07:22 - Changed old-argo-dataflow|Skyline-DTE from maintain to admin
+
