@@ -10,7 +10,7 @@
     {
     "username": "Skyline-DTE",
       "repositories": [
-        { "repo": "old-argo-dataflow", "permission": "maintain" }
+        { "repo": "old-argo-dataflow", "permission": "admin" }
       ]
     }
   ]
