@@ -171,3 +171,7 @@ argocd-operator:maintain
 🔹 **Changed Access:**
 2026-09-30 06:07:22 - Changed old-argo-dataflow|Skyline-DTE from maintain to admin
 
+🔹 **New Users:**
+2026-09-30 06:21:02 - Added old-argo-dataflow|ghulk047 with maintain
+2026-09-30 06:21:02 - Added terraform-provider-argocd|ghulk047 with write
+
