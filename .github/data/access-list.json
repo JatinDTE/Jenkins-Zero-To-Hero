@@ -6,7 +6,9 @@
         { "repo": "Jenkins-Zero-To-Hero", "permission": "maintain" },
         { "repo": "argocd-operator", "permission": "admin" }
       ]
-      "username": "Skyline-DTE",
+    },
+    {
+    "username": "Skyline-DTE",
       "repositories": [
         { "repo": "old-argo-dataflow", "permission": "maintain" }
       ]
