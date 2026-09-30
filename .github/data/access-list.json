@@ -12,6 +12,13 @@
       "repositories": [
         { "repo": "old-argo-dataflow", "permission": "admin" }
       ]
+    },
+    {
+    "username": "ghulk047",
+      "repositories": [
+        { "repo": "old-argo-dataflow", "permission": "maintain" },
+        { "repo": "terraform-provider-argocd", "permission": "write" }
+      ]
     }
   ]
 }
