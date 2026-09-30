@@ -14,9 +14,9 @@ jobs:
         with:
           fetch-depth: 2
       - name: Get Previous JSON Version
-        run: >
-          git show HEAD~1:.github/data/access-list.json > old_access_list.json ||
-          echo '{"users":[]}' > old_access_list.json
+        run: |
+          git show HEAD~1:.github/data/access-list.json > old_access_list.json || echo '{"users":[]}' > old_access_list.json
+          jq empty old_access_list.json 2>/dev/null || echo '{"users":[]}' > old_access_list.json
       - name: Read Current Users JSON
         run: echo "USERS_JSON=$(cat .github/data/access-list.json | jq -c)" >>
           $GITHUB_ENV
