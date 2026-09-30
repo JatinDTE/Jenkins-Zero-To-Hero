@@ -10,13 +10,12 @@
     {
     "username": "Skyline-DTE",
       "repositories": [
-        { "repo": "old-argo-dataflow", "permission": "admin" }
+        { "repo": "old-argo-dataflow", "permission": "maintain" }
       ]
     },
     {
     "username": "ghulk047",
       "repositories": [
-        { "repo": "old-argo-dataflow", "permission": "maintain" },
         { "repo": "terraform-provider-argocd", "permission": "write" }
       ]
     }
